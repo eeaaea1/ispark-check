@@ -2,7 +2,7 @@ YAML
 
 name: ISPARK check
 
-on:
+'on':
   workflow_dispatch:
 
 jobs:
