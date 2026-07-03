@@ -3,13 +3,11 @@ YAML
 name: ISPARK check
 
 on:
-workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   test:
-  runs-on: ubuntu-latest
-
-  steps:
-    name: Hello
-    run: echo "Workflow is working!"
-    
+    runs-on: ubuntu-latest
+    steps:
+        name: Hello
+        run: echo "Workflow is working!"
