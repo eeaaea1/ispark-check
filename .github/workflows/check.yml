@@ -1,12 +1,27 @@
 name: ISPARK check
 
-'on':
+on:
   workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
 
 jobs:
-  test:
+  check:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Hello
-        run: echo "Workflow is working!"
+      - name: Repository'yi indir
+        uses: actions/checkout@v4
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Kütüphaneleri kur
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+
+      - name: Kontrolü çalıştır
+        run: python check.py
