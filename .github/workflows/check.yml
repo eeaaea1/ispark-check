@@ -25,6 +25,9 @@ jobs:
 
       - name: Kontrolü çalıştır
         run: python check.py
+        
+      - name: Dosyaları listele
+        run: ls -la
 
       - name: Ekran görüntüsünü yükle
         uses: actions/upload-artifact@v4
