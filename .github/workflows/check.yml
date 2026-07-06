@@ -25,3 +25,9 @@ jobs:
 
       - name: Kontrolü çalıştır
         run: python check.py
+
+      - name: Ekran görüntüsünü yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ispark-screenshot
+          path: ispark.png
