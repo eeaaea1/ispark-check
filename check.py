@@ -5,10 +5,10 @@ with sync_playwright() as p:
 
     page = browser.new_page()
 
-    page.goto("https://ispark.istanbul/abone/")
-
-    page.wait_for_timeout(5000)
+    page.goto("https://ispark.istanbul/abone/", wait_until="networkidle")
 
     page.screenshot(path="ispark.png", full_page=True)
+
+    print("Ekran görüntüsü alındı.")
 
     browser.close()
