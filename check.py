@@ -1,24 +1,32 @@
 from playwright.sync_api import sync_playwright
 
-print("1- Program başladı")
+print("Program başladı")
 
 with sync_playwright() as p:
-    print("2- Playwright açıldı")
 
-    browser = p.chromium.launch(headless=True)
+    browser = p.chromium.launch(
+        headless=True
+    )
 
-    page = browser.new_page()
+    page = browser.new_page(
+        viewport={"width": 1400, "height": 2500}
+    )
 
-    print("3- Sayfaya gidiliyor")
+    page.goto(
+        "https://ispark.istanbul/abone/",
+        wait_until="domcontentloaded",
+        timeout=60000
+    )
 
-    page.goto("https://example.com")
+    page.wait_for_timeout(5000)
 
-    print("4- Sayfa açıldı")
+    page.screenshot(
+        path="ispark.png",
+        full_page=True
+    )
 
-    page.screenshot(path="ispark.png")
-
-    print("5- Ekran görüntüsü alındı")
+    print("Ekran görüntüsü oluşturuldu")
 
     browser.close()
 
-print("6- Program bitti")
+print("Program bitti")
