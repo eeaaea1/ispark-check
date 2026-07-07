@@ -16,8 +16,8 @@ headers = {
 # TEST İÇİN (Motosiklet + Benzin)
 # Gerçek kullanıma geçince bunları 1 ve 2 yapacağız.
 data = {
-    "AracTipi": "10",
-    "YakitTipi": "1"
+    "AracTipi": "1",
+    "YakitTipi": "2"
 }
 
 TOKEN = os.environ["TELEGRAM_TOKEN"]
