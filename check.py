@@ -1,15 +1,22 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import requests
 
-options = Options()
-options.add_argument("--headless=new")
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
+URL = "https://ispark.istanbul/abone/getparks.php"
 
-driver = webdriver.Chrome(options=options)
+data = {
+    "AracTipi": "10",   # Test için Motosiklet
+    "YakitTipi": "1"    # Test için Benzin
+}
 
-driver.get("https://ispark.istanbul/abone/")
+print("İSPARK sorgulanıyor...")
 
-print(driver.page_source)
+response = requests.post(URL, data=data)
 
-driver.quit()
+print("HTTP Durumu:", response.status_code)
+
+text = response.text
+
+if "1420" in text or "Harmantepe" in text:
+    print("✅ 1420 BULUNDU")
+    raise Exception("TEST BAŞARILI - 1420 bulundu")
+else:
+    print("❌ 1420 bulunamadı")
