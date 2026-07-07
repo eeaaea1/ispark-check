@@ -1,7 +1,15 @@
-from pathlib import Path
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
-print("Program başladı")
+options = Options()
+options.add_argument("--headless=new")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
 
-Path("test.txt").write_text("GitHub Actions çalışıyor.", encoding="utf-8")
+driver = webdriver.Chrome(options=options)
 
-print("test.txt oluşturuldu")
+driver.get("https://ispark.istanbul/abone/")
+
+print(driver.page_source)
+
+driver.quit()
