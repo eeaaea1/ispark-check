@@ -1,6 +1,7 @@
 import os
 import requests
 
+# İSPARK API
 url = "https://ispark.istanbul/abone/getparks.php"
 
 headers = {
@@ -12,17 +13,23 @@ headers = {
     "Referer": "https://ispark.istanbul/abone/"
 }
 
-# TEST İÇİN
+# TEST İÇİN (Motosiklet + Benzin)
+# Gerçek kullanıma geçince bunları 1 ve 2 yapacağız.
 data = {
-    "AracTipi": "10",   # Motosiklet
-    "YakitTipi": "1"    # Benzin
+    "AracTipi": "10",
+    "YakitTipi": "1"
 }
 
 TOKEN = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-r = requests.post(url, headers=headers, data=data)
-parks = r.json()
+print("İSPARK sorgulanıyor...")
+
+response = requests.post(url, headers=headers, data=data)
+
+print("HTTP:", response.status_code)
+
+parks = response.json()
 
 bulundu = False
 
@@ -30,13 +37,16 @@ for park in parks:
     if park["LocCode"] == "1420":
         bulundu = True
 
+        print("1420 bulundu.")
+        print(park)
+
         mesaj = (
             "✅ ISPARK UYARI\n\n"
             f"{park['LocName']}\n\n"
             "Test başarılı."
         )
 
-        requests.post(
+        telegram = requests.post(
             f"https://api.telegram.org/bot{TOKEN}/sendMessage",
             data={
                 "chat_id": CHAT_ID,
@@ -44,7 +54,10 @@ for park in parks:
             }
         )
 
-        print("Telegram mesajı gönderildi.")
+        print("Telegram HTTP:", telegram.status_code)
+        print("Telegram cevabı:")
+        print(telegram.text)
+
         break
 
 if not bulundu:
