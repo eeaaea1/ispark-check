@@ -1,22 +1,22 @@
 import requests
 
-URL = "https://ispark.istanbul/abone/getparks.php"
+url = "https://ispark.istanbul/abone/getparks.php"
 
-data = {
-    "AracTipi": "10",   # Test için Motosiklet
-    "YakitTipi": "1"    # Test için Benzin
+headers = {
+    "User-Agent": "Mozilla/5.0",
+    "X-Requested-With": "XMLHttpRequest",
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "Origin": "https://ispark.istanbul",
+    "Referer": "https://ispark.istanbul/abone/"
 }
 
-print("İSPARK sorgulanıyor...")
+data = {
+    "AracTipi": "10",
+    "YakitTipi": "1"
+}
 
-response = requests.post(URL, data=data)
+r = requests.post(url, headers=headers, data=data)
 
-print("HTTP Durumu:", response.status_code)
-
-text = response.text
-
-if "1420" in text or "Harmantepe" in text:
-    print("✅ 1420 BULUNDU")
-    raise Exception("TEST BAŞARILI - 1420 bulundu")
-else:
-    print("❌ 1420 bulunamadı")
+print("HTTP:", r.status_code)
+print(r.text[:500])
