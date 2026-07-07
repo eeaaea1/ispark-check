@@ -12,11 +12,21 @@ headers = {
 }
 
 data = {
-    "AracTipi": "10",
-    "YakitTipi": "1"
+    "AracTipi": "10",   # Test: Motosiklet
+    "YakitTipi": "1"    # Test: Benzin
 }
 
 r = requests.post(url, headers=headers, data=data)
+parks = r.json()
 
-print("HTTP:", r.status_code)
-print(r.text[:500])
+bulundu = False
+
+for park in parks:
+    if park["LocCode"] == "1420":
+        bulundu = True
+        print("BULUNDU!")
+        print(park)
+        break
+
+if not bulundu:
+    print("1420 bulunamadı.")
