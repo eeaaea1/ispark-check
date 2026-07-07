@@ -29,8 +29,10 @@ jobs:
           ls -la
 
       - name: Kontrolü çalıştır
-        run: |
-          python check.py
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python check.py
 
       - name: İşlem tamamlandı
         run: echo "Workflow tamamlandı."
