@@ -1,38 +1,14 @@
-name: ISPARK check
+name: ISPARK Test
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
 
 jobs:
-  check:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Repository'yi indir
-        uses: actions/checkout@v4
-
-      - name: Python kur
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Kütüphaneleri kur
+      - name: ISPARK bağlantı testi
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Repository dosyalarını göster
-        run: |
-          pwd
-          ls -la
-
-      - name: Kontrolü çalıştır
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python check.py
-
-      - name: İşlem tamamlandı
-        run: echo "Workflow tamamlandı."
+          echo "ISPARK test ediliyor..."
+          curl -I --connect-timeout 20 --max-time 30 https://ispark.istanbul
