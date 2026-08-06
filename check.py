@@ -1,64 +1,82 @@
 import os
+import json
 import requests
-
-# İSPARK API
-url = "https://ispark.istanbul/abone/getparks.php"
-
-headers = {
-    "User-Agent": "Mozilla/5.0",
-    "X-Requested-With": "XMLHttpRequest",
-    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-    "Origin": "https://ispark.istanbul",
-    "Referer": "https://ispark.istanbul/abone/"
-}
-
-# TEST İÇİN (Motosiklet + Benzin)
-# Gerçek kullanıma geçince bunları 1 ve 2 yapacağız.
-data = {
-    "AracTipi": "1",
-    "YakitTipi": "2"
-}
+from playwright.sync_api import sync_playwright
 
 TOKEN = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-print("İSPARK sorgulanıyor...")
+URL = "https://ispark.istanbul/abone/"
 
-response = requests.post(url, headers=headers, data=data)
 
-print("HTTP:", response.status_code)
+def telegram_gonder(mesaj):
+    requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+        data={
+            "chat_id": CHAT_ID,
+            "text": mesaj
+        },
+        timeout=20
+    )
 
-parks = response.json()
 
-bulundu = False
+print("İSPARK sitesi açılıyor...")
 
-for park in parks:
-    if park["LocCode"] == "1420":
-        bulundu = True
+with sync_playwright() as p:
 
-        print("1420 bulundu.")
-        print(park)
+    browser = p.chromium.launch(
+        headless=True
+    )
 
-        mesaj = (
-            "✅ ISPARK UYARI\n\n"
-            f"{park['LocName']}\n\n"
-            "Test başarılı."
-        )
+    page = browser.new_page()
 
-        telegram = requests.post(
-            f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-            data={
-                "chat_id": CHAT_ID,
-                "text": mesaj
-            }
-        )
+    page.goto(
+        URL,
+        wait_until="networkidle",
+        timeout=60000
+    )
 
-        print("Telegram HTTP:", telegram.status_code)
-        print("Telegram cevabı:")
-        print(telegram.text)
+    print("Sayfa açıldı.")
+        print("Otopark verisi isteniyor...")
 
-        break
+    response = page.wait_for_response(
+        lambda r: "getparks.php" in r.url,
+        timeout=30000
+    )
 
-if not bulundu:
-    print("1420 bulunamadı.")
+    page.select_option('select[name="AracTipi"]', value="1")
+    page.select_option('select[name="YakitTipi"]', value="2")
+
+    page.wait_for_timeout(3000)
+
+    data = response.json()
+
+    print(f"{len(data)} adet otopark bulundu.")
+
+    park_1420 = None
+
+    for park in data:
+        if park.get("LocCode") == "1420":
+            park_1420 = park
+            break
+
+    if park_1420 is None:
+        print("1420 numaralı otopark bulunamadı.")
+        browser.close()
+        exit()
+
+    print("1420 bulundu:")
+    print(json.dumps(park_1420, indent=2, ensure_ascii=False))
+    mesaj = (
+        "✅ İSPARK KONTROL\n\n"
+        f"Otopark: {park_1420['LocName']}\n"
+        f"Kod: {park_1420['LocCode']}"
+    )
+
+    telegram_gonder(mesaj)
+
+    print("Telegram bildirimi gönderildi.")
+
+    browser.close()
+
+print("İşlem tamamlandı.")
