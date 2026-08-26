@@ -1,14 +1,32 @@
-name: ISPARK Test
+name: ISPark Kontrol
 
 on:
   workflow_dispatch:
 
 jobs:
-  test:
+  check:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ISPARK bağlantı testi
+      - name: Repository checkout
+        uses: actions/checkout@v4
+
+      - name: Python kurulumu
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Paketleri kur
         run: |
-          echo "ISPARK test ediliyor..."
-          curl -I --connect-timeout 20 --max-time 30 https://ispark.istanbul
+          pip install -r requirements.txt
+
+      - name: Playwright Chromium kur
+        run: |
+          playwright install --with-deps chromium
+
+      - name: ISPark kontrol
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python check.py
