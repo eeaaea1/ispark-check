@@ -10,7 +10,7 @@ URL = "https://ispark.istanbul/abone/"
 
 
 def telegram_gonder(mesaj):
-    response = requests.post(
+    requests.post(
         f"https://api.telegram.org/bot{TOKEN}/sendMessage",
         data={
             "chat_id": CHAT_ID,
@@ -19,33 +19,66 @@ def telegram_gonder(mesaj):
         timeout=20
     )
 
-    print("Telegram HTTP:", response.status_code)
-
 
 print("İSPARK sitesi açılıyor...")
 
 with sync_playwright() as p:
 
     browser = p.chromium.launch(
-        headless=True
+        headless=True,
+        args=[
+            "--disable-blink-features=AutomationControlled",
+            "--no-sandbox",
+            "--disable-dev-shm-usage"
+        ]
     )
 
     page = browser.new_page()
 
+    # Network kayıtları
+    def request_log(request):
+        if "ispark.istanbul" in request.url:
+            print("REQUEST:", request.method, request.url)
+
+    page.on("request", request_log)
+
     print("Sayfa açılıyor...")
 
-    page.goto(
-        URL,
-        wait_until="domcontentloaded",
-        timeout=60000
-    )
+    try:
+        page.goto(
+            URL,
+            wait_until="commit",
+            timeout=30000
+        )
 
-    print("Sayfa açıldı.")
+        print("İSPARK bağlantısı kuruldu.")
 
-    page.wait_for_timeout(5000)
+    except Exception as e:
 
-    print("Araç tipi seçiliyor...")
+        print("page.goto hatası:")
+        print(e)
 
+        try:
+            page.screenshot(
+                path="ispark_error.png",
+                full_page=True
+            )
+            print("Hata ekran görüntüsü kaydedildi.")
+        except Exception as screenshot_error:
+            print("Ekran görüntüsü alınamadı:", screenshot_error)
+
+        browser.close()
+        raise
+
+    # Sayfanın JavaScript'lerinin çalışması için bekle
+    page.wait_for_timeout(10000)
+
+    print("Sayfa URL:", page.url)
+    print("Sayfa başlığı:", page.title())
+
+    print("Otopark verisi aranıyor...")
+
+    # Araç tipi
     try:
         page.select_option(
             'select[name="AracTipi"]',
@@ -55,8 +88,7 @@ with sync_playwright() as p:
     except Exception as e:
         print("Araç tipi seçilemedi:", e)
 
-    print("Yakıt tipi seçiliyor...")
-
+    # Yakıt tipi
     try:
         page.select_option(
             'select[name="YakitTipi"]',
@@ -69,6 +101,7 @@ with sync_playwright() as p:
     print("getparks.php isteği bekleniyor...")
 
     try:
+
         with page.expect_response(
             lambda r: "getparks.php" in r.url,
             timeout=30000
@@ -78,7 +111,7 @@ with sync_playwright() as p:
 
         response = response_info.value
 
-        print("getparks.php bulundu.")
+        print("getparks.php bulundu!")
         print("URL:", response.url)
         print("HTTP:", response.status)
 
@@ -87,55 +120,45 @@ with sync_playwright() as p:
         print("getparks.php isteği yakalanamadı.")
         print("HATA:", e)
 
+        try:
+            page.screenshot(
+                path="ispark_error.png",
+                full_page=True
+            )
+            print("Ekran görüntüsü kaydedildi.")
+        except Exception:
+            pass
+
         browser.close()
-        exit(1)
+        raise
 
     try:
-
         data = response.json()
-
     except Exception as e:
-
-        print("JSON okunamadı.")
-        print("HATA:", e)
-        print("Gelen cevap:")
+        print("JSON okunamadı:", e)
         print(response.text())
-
         browser.close()
-        exit(1)
+        raise
 
     print("JSON başarıyla alındı.")
 
     if isinstance(data, dict):
-
-        print("JSON bir liste değil, sözlük olarak geldi.")
-
         if "data" in data:
             data = data["data"]
-
         elif "parks" in data:
             data = data["parks"]
-
-        else:
-            print(json.dumps(data, indent=2, ensure_ascii=False))
-            browser.close()
-            exit(1)
 
     print(f"{len(data)} adet otopark bulundu.")
 
     park_1420 = None
 
     for park in data:
-
         if str(park.get("LocCode")) == "1420":
-
             park_1420 = park
             break
 
     if park_1420 is None:
-
         print("1420 numaralı otopark bulunamadı.")
-
         browser.close()
         exit(0)
 
@@ -149,20 +172,10 @@ with sync_playwright() as p:
         )
     )
 
-    loc_name = park_1420.get(
-        "LocName",
-        "Bilinmiyor"
-    )
-
-    loc_code = park_1420.get(
-        "LocCode",
-        "1420"
-    )
-
     mesaj = (
         "✅ İSPARK KONTROL\n\n"
-        f"Otopark: {loc_name}\n"
-        f"Kod: {loc_code}"
+        f"Otopark: {park_1420.get('LocName', 'Bilinmiyor')}\n"
+        f"Kod: {park_1420.get('LocCode', '1420')}"
     )
 
     telegram_gonder(mesaj)
