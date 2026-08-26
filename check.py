@@ -10,7 +10,7 @@ URL = "https://ispark.istanbul/abone/"
 
 
 def telegram_gonder(mesaj):
-    requests.post(
+    response = requests.post(
         f"https://api.telegram.org/bot{TOKEN}/sendMessage",
         data={
             "chat_id": CHAT_ID,
@@ -18,6 +18,8 @@ def telegram_gonder(mesaj):
         },
         timeout=20
     )
+
+    print("Telegram HTTP:", response.status_code)
 
 
 print("İSPARK sitesi açılıyor...")
@@ -40,23 +42,10 @@ with sync_playwright() as p:
 
     print("Sayfa açıldı.")
 
-    # Sayfanın yüklenmesini bekle
     page.wait_for_timeout(5000)
 
-    print("Otopark verisi aranıyor...")
+    print("Araç tipi seçiliyor...")
 
-    # getparks.php isteklerini kontrol et
-    response = None
-
-    try:
-        response = page.wait_for_response(
-            lambda r: "getparks.php" in r.url,
-            timeout=10000
-        )
-    except Exception:
-        print("Sayfa açılırken getparks.php yakalanamadı.")
-
-    # Araç tipi
     try:
         page.select_option(
             'select[name="AracTipi"]',
@@ -66,7 +55,8 @@ with sync_playwright() as p:
     except Exception as e:
         print("Araç tipi seçilemedi:", e)
 
-    # Yakıt tipi
+    print("Yakıt tipi seçiliyor...")
+
     try:
         page.select_option(
             'select[name="YakitTipi"]',
@@ -76,49 +66,80 @@ with sync_playwright() as p:
     except Exception as e:
         print("Yakıt tipi seçilemedi:", e)
 
-    # AJAX isteğinin oluşması için bekle
-    page.wait_for_timeout(5000)
-
-    # Yeni getparks.php isteğini yakala
-    if response is None:
-        try:
-            response = page.wait_for_response(
-                lambda r: "getparks.php" in r.url,
-                timeout=30000
-            )
-        except Exception as e:
-            print("getparks.php isteği bulunamadı.")
-            print(e)
-            browser.close()
-            exit(1)
-
-    print("getparks.php bulundu.")
-    print("URL:", response.url)
+    print("getparks.php isteği bekleniyor...")
 
     try:
-        data = response.json()
+        with page.expect_response(
+            lambda r: "getparks.php" in r.url,
+            timeout=30000
+        ) as response_info:
+
+            page.wait_for_timeout(1000)
+
+        response = response_info.value
+
+        print("getparks.php bulundu.")
+        print("URL:", response.url)
+        print("HTTP:", response.status)
+
     except Exception as e:
-        print("JSON okunamadı.")
-        print(e)
-        print(response.text())
+
+        print("getparks.php isteği yakalanamadı.")
+        print("HATA:", e)
+
         browser.close()
         exit(1)
+
+    try:
+
+        data = response.json()
+
+    except Exception as e:
+
+        print("JSON okunamadı.")
+        print("HATA:", e)
+        print("Gelen cevap:")
+        print(response.text())
+
+        browser.close()
+        exit(1)
+
+    print("JSON başarıyla alındı.")
+
+    if isinstance(data, dict):
+
+        print("JSON bir liste değil, sözlük olarak geldi.")
+
+        if "data" in data:
+            data = data["data"]
+
+        elif "parks" in data:
+            data = data["parks"]
+
+        else:
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+            browser.close()
+            exit(1)
 
     print(f"{len(data)} adet otopark bulundu.")
 
     park_1420 = None
 
     for park in data:
+
         if str(park.get("LocCode")) == "1420":
+
             park_1420 = park
             break
 
     if park_1420 is None:
-        print("1420 numaralı otopark bulunamadı.")
-        browser.close()
-        exit()
 
-    print("1420 bulundu:")
+        print("1420 numaralı otopark bulunamadı.")
+
+        browser.close()
+        exit(0)
+
+    print("1420 NUMARALI OTOPARK BULUNDU!")
 
     print(
         json.dumps(
@@ -128,10 +149,20 @@ with sync_playwright() as p:
         )
     )
 
+    loc_name = park_1420.get(
+        "LocName",
+        "Bilinmiyor"
+    )
+
+    loc_code = park_1420.get(
+        "LocCode",
+        "1420"
+    )
+
     mesaj = (
         "✅ İSPARK KONTROL\n\n"
-        f"Otopark: {park_1420.get('LocName', 'Bilinmiyor')}\n"
-        f"Kod: {park_1420.get('LocCode', 'Bilinmiyor')}"
+        f"Otopark: {loc_name}\n"
+        f"Kod: {loc_code}"
     )
 
     telegram_gonder(mesaj)
