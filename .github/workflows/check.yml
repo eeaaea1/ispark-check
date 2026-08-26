@@ -16,6 +16,20 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Dosyaları kontrol et
+        run: |
+          echo "=== BRANCH ==="
+          git branch --show-current
+
+          echo "=== COMMIT ==="
+          git log -1 --oneline
+
+          echo "=== CHECK.PY ==="
+          sed -n '1,220p' check.py
+
+          echo "=== DOSYALAR ==="
+          find . -maxdepth 3 -type f | sort
+
       - name: Paketleri kur
         run: |
           pip install -r requirements.txt
