@@ -9,6 +9,7 @@ on:
 jobs:
   kontrol:
     runs-on: ubuntu-latest
+
     steps:
       - name: Depoyu indir
         uses: actions/checkout@v4
@@ -18,16 +19,39 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: İSPARK bağlantı testi
+      - name: DNS ve bağlantı testleri
         run: |
-          echo "=== DNS ==="
-          getent hosts ispark.istanbul || true
+          echo "================================"
+          echo "1. ISPARK DNS"
+          echo "================================"
+          getent ahostsv4 ispark.istanbul || true
 
-          echo "=== IPv4 HTTPS ==="
-          curl -4 -I --connect-timeout 10 --max-time 15 https://ispark.istanbul/abone/ || true
+          echo "================================"
+          echo "2. ANA ADRES HTTPS"
+          echo "================================"
+          curl -4 -I -L --connect-timeout 10 --max-time 15 https://ispark.istanbul/abone/ || true
 
-          echo "=== HTTP ==="
+          echo "================================"
+          echo "3. ANA ADRES HTTP"
+          echo "================================"
           curl -I -L --connect-timeout 10 --max-time 15 http://ispark.istanbul/ || true
 
-          echo "=== WWW HTTPS ==="
+          echo "================================"
+          echo "4. WWW HTTPS"
+          echo "================================"
           curl -I -L --connect-timeout 10 --max-time 15 https://www.ispark.istanbul/ || true
+
+          echo "================================"
+          echo "5. ONLINE ISPARK DNS"
+          echo "================================"
+          getent ahostsv4 online.ispark.istanbul || true
+
+          echo "================================"
+          echo "6. ONLINE ISPARK HTTPS"
+          echo "================================"
+          curl -I -L --connect-timeout 10 --max-time 15 https://online.ispark.istanbul/abone/ || true
+
+          echo "================================"
+          echo "7. DNS ALTERNATIF TESTI"
+          echo "================================"
+          python -c "import socket; print('Google DNS:', socket.gethostbyname('ispark.istanbul'))" || true
