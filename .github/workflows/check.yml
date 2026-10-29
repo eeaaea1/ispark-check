@@ -1,57 +1,69 @@
+steps:
+  - name: Depoyu indir
+    uses: actions/checkout@v4
 
-name: İSPARK Bağlantı Kontrolü
+  - name: Python kur
+    uses: actions/setup-python@v5
+    with:
+      python-version: "3.11"
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "*/5 * * * *"
+  - name: DNS araçlarını kur
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y dnsutils
 
-jobs:
-  kontrol:
-    runs-on: ubuntu-latest
+  - name: DNS ve bağlantı testleri
+    run: |
+      echo "================================"
+      echo "1. ISPARK DNS"
+      echo "================================"
+      getent ahostsv4 ispark.istanbul || true
 
-    steps:
-      - name: Depoyu indir
-        uses: actions/checkout@v4
+      echo "================================"
+      echo "2. ANA ADRES HTTPS"
+      echo "================================"
+      curl -4 -I -L --connect-timeout 10 --max-time 15 https://ispark.istanbul/abone/ || true
 
-      - name: Python kur
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+      echo "================================"
+      echo "3. ANA ADRES HTTP"
+      echo "================================"
+      curl -4 -I -L --connect-timeout 10 --max-time 15 http://ispark.istanbul/ || true
 
-      - name: DNS ve bağlantı testleri
-        run: |
-          echo "================================"
-          echo "1. ISPARK DNS"
-          echo "================================"
-          getent ahostsv4 ispark.istanbul || true
+      echo "================================"
+      echo "4. WWW HTTPS"
+      echo "================================"
+      curl -4 -I -L --connect-timeout 10 --max-time 15 https://www.ispark.istanbul/ || true
 
-          echo "================================"
-          echo "2. ANA ADRES HTTPS"
-          echo "================================"
-          curl -4 -I -L --connect-timeout 10 --max-time 15 https://ispark.istanbul/abone/ || true
+      echo "================================"
+      echo "5. ONLINE ISPARK DNS"
+      echo "================================"
+      getent ahostsv4 online.ispark.istanbul || true
 
-          echo "================================"
-          echo "3. ANA ADRES HTTP"
-          echo "================================"
-          curl -I -L --connect-timeout 10 --max-time 15 http://ispark.istanbul/ || true
+      echo "================================"
+      echo "6. ONLINE ISPARK HTTPS"
+      echo "================================"
+      curl -4 -I -L --connect-timeout 10 --max-time 15 https://online.ispark.istanbul/abone/ || true
 
-          echo "================================"
-          echo "4. WWW HTTPS"
-          echo "================================"
-          curl -I -L --connect-timeout 10 --max-time 15 https://www.ispark.istanbul/ || true
+      echo "================================"
+      echo "7. GOOGLE DNS GERCEK SORGUSU"
+      echo "================================"
+      dig @8.8.8.8 ispark.istanbul A +time=3 +tries=1 || true
 
-          echo "================================"
-          echo "5. ONLINE ISPARK DNS"
-          echo "================================"
-          getent ahostsv4 online.ispark.istanbul || true
+      echo "================================"
+      echo "8. CLOUDFLARE DNS GERCEK SORGUSU"
+      echo "================================"
+      dig @1.1.1.1 ispark.istanbul A +time=3 +tries=1 || true
 
-          echo "================================"
-          echo "6. ONLINE ISPARK HTTPS"
-          echo "================================"
-          curl -I -L --connect-timeout 10 --max-time 15 https://online.ispark.istanbul/abone/ || true
+      echo "================================"
+      echo "9. GOOGLE DNS ONLINE ISPARK"
+      echo "================================"
+      dig @8.8.8.8 online.ispark.istanbul A +time=3 +tries=1 || true
 
-          echo "================================"
-          echo "7. DNS ALTERNATIF TESTI"
-          echo "================================"
-          python -c "import socket; print('Google DNS:', socket.gethostbyname('ispark.istanbul'))" || true
+      echo "================================"
+      echo "10. IP ADRESINE BAGLANTI TESTI"
+      echo "================================"
+      curl -4 -I --connect-timeout 10 --max-time 15 --resolve ispark.istanbul:443:195.214.131.194 https://ispark.istanbul/abone/ || true
+
+      echo "================================"
+      echo "11. TEST TAMAMLANDI"
+      echo "================================"
