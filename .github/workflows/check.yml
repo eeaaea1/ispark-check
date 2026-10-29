@@ -1,39 +1,7 @@
-name: ISPark Kontrol
-
-on:
-  workflow_dispatch:
-
-jobs:
-  check:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Repository checkout
-        uses: actions/checkout@v4
-
-      - name: Network testi
+      - name: HTTP ve www testi
         run: |
-          echo "=== DNS ==="
-          getent hosts ispark.istanbul || true
+          echo "=== HTTP ==="
+          curl -I -L --connect-timeout 10 --max-time 15 http://ispark.istanbul/ || true
 
-          echo "=== IPv4 ==="
-          curl -4 -I --connect-timeout 10 https://ispark.istanbul/abone/ || true
-
-          echo "=== IPv6 ==="
-          curl -6 -I --connect-timeout 10 https://ispark.istanbul/abone/ || true
-
-      - name: Python kurulumu
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Paketleri kur
-        run: |
-          pip install -r requirements.txt
-
-      - name: ISPark bağlantı testi
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python check.py
+          echo "=== WWW HTTPS ==="
+          curl -I -L --connect-timeout 10 --max-time 15 https://www.ispark.istanbul/ || true
