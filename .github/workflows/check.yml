@@ -1,5 +1,31 @@
-      - name: HTTP ve www testi
+
+name: İSPARK Bağlantı Kontrolü
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+jobs:
+  kontrol:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Depoyu indir
+        uses: actions/checkout@v4
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: İSPARK bağlantı testi
         run: |
+          echo "=== DNS ==="
+          getent hosts ispark.istanbul || true
+
+          echo "=== IPv4 HTTPS ==="
+          curl -4 -I --connect-timeout 10 --max-time 15 https://ispark.istanbul/abone/ || true
+
           echo "=== HTTP ==="
           curl -I -L --connect-timeout 10 --max-time 15 http://ispark.istanbul/ || true
 
